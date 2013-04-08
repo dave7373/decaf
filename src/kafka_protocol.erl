@@ -79,7 +79,7 @@ create_message(Payload, Magic, Compression) ->
     KeyBytes = <<"">>, %hardcoded empty key
     KeyByteSize = size(KeyBytes),
 
-    MessageBinary =
+    MessageBinaryNoCheckSum =
         <<
           Magic:8/signed-integer,
           Compression:8/signed-integer, % Attributes = Compression ?
@@ -88,11 +88,13 @@ create_message(Payload, Magic, Compression) ->
           PayloadSize:32/signed-integer, %length of the Value byte array
           Payload/binary>>,
 
-    CheckSum = erlang:crc32(MessageBinary),
-    MessageLength = 8 + 4 + 4 + size(MessageBinary),
+    CheckSum = erlang:crc32(MessageBinaryNoCheckSum),
+    MessageBinary =
+        <<CheckSum:32/integer,
+          MessageBinaryNoCheckSum/binary>>,
+    MessageLength =  size(MessageBinary),
     <<0:64/signed-integer, %Offset = 0
       MessageLength:32/signed-integer,
-      CheckSum:32/integer,
       MessageBinary/binary>>.
 
 
